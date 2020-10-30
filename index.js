@@ -4,27 +4,51 @@ const canvasWidth=canvas.width;
 const canvasHeight=canvas.height;
 const canvasData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
 
-let gridSize = 40;
+let config = {
+	scale: {
+		current: 1,
+		min: 0.5,
+		max: 5
+	},
+	grid: {
+		size: 20,
+	}
+}
 
-function drawGrid(size){
-	let verticalLines = Math.ceil(canvasWidth/size)+1;
-	let horizontalLines = Math.ceil(canvasHeight/size)+1;
+const drawGrid = (size, scale = 1) => {
+	let verticalLines = Math.ceil(canvasWidth/size/scale)+1;
+	let horizontalLines = Math.ceil(canvasHeight/size/scale)+1;
 	for(let i = 0; i < verticalLines; i++){
 		ctx.beginPath();
-		ctx.moveTo(size*i, 0);    
-		ctx.lineTo(size*i, canvasHeight);  
+		ctx.moveTo(size*i*scale, 0);    
+		ctx.lineTo(size*i*scale, canvasHeight);  
 		ctx.stroke(); 
 	}
 	for(let j = 0; j < horizontalLines; j++){
 		ctx.beginPath();  
-		ctx.moveTo(0, size*j);    
-		ctx.lineTo(canvasWidth, size*j);  
+		ctx.moveTo(0, size*j*scale);    
+		ctx.lineTo(canvasWidth, size*j*scale);  
 		ctx.stroke(); 
 	}
 }
 
-function render(){
-	drawGrid(gridSize);
+const scale = (delta) => {
+	config.scale.current = config.scale.current + delta;
+	if (config.scale.current < config.scale.min) config.scale.current = config.scale.min; 
+	if (config.scale.current > config.scale.max) config.scale.current = config.scale.max; 
 }
 
-render();
+canvas.addEventListener("wheel", (e)=>{
+	let delta = (e.deltaY || e.detail || e.wheelDelta) > 0 ? -0.05 : 0.05;
+	scale(delta);
+})
+
+function render(){
+	window.requestAnimationFrame(render);
+	ctx.putImageData(canvasData, 0, 0);
+	drawGrid(config.grid.size, config.scale.current)
+};
+
+(function init(){
+	render();
+}())
